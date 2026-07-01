@@ -26,12 +26,35 @@
     color:var(--text);
     font-family:'IBM Plex Sans', sans-serif;
     line-height:1.6;
+    overflow-x:hidden;
   }
   .mono{font-family:'IBM Plex Mono', monospace;}
   ::selection{background:var(--signal); color:#0e1116;}
 
   a{color:inherit; text-decoration:none;}
-  .container{max-width:920px; margin:0 auto; padding:0 28px;}
+  .container{max-width:920px; margin:0 auto; padding:0 28px; position:relative;}
+
+  /* ---------- scroll progress ---------- */
+  #scrollbar{
+    position:fixed; top:0; left:0; height:2px; width:0%;
+    background:linear-gradient(90deg,var(--calm),var(--signal));
+    z-index:200; transition:width .08s linear;
+    box-shadow:0 0 8px var(--calm);
+  }
+
+  /* ---------- cursor spotlight ---------- */
+  #spotlight{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background:radial-gradient(600px circle at var(--mx,50%) var(--my,20%), rgba(79,209,197,0.07), transparent 40%);
+    transition:background .1s ease;
+  }
+
+  /* ---------- hero particle canvas ---------- */
+  #particles{position:absolute; inset:0; width:100%; height:100%; opacity:.5; pointer-events:none;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}
+  }
 
   /* ---------- top bar ---------- */
   header{
@@ -45,14 +68,22 @@
     padding:14px 0;
   }
   .brand{display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:14px;}
-  .dot{width:8px; height:8px; border-radius:50%; background:var(--calm); box-shadow:0 0 8px var(--calm);}
+  .dot{width:8px; height:8px; border-radius:50%; background:var(--calm); box-shadow:0 0 8px var(--calm); animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 6px var(--calm);} 50%{box-shadow:0 0 14px var(--calm);}}
   nav{display:flex; gap:22px; font-size:13px;}
-  nav a{color:var(--text-dim); font-family:'IBM Plex Mono',monospace; transition:color .2s;}
+  nav a{color:var(--text-dim); font-family:'IBM Plex Mono',monospace; transition:color .2s; position:relative; padding-bottom:3px;}
+  nav a::after{content:''; position:absolute; left:0; bottom:-1px; width:0; height:1px; background:var(--signal); transition:width .25s ease;}
   nav a:hover{color:var(--signal);}
+  nav a:hover::after{width:100%;}
+  nav a.active{color:var(--calm);}
+  nav a.active::after{width:100%; background:var(--calm);}
   @media (max-width:720px){ nav{display:none;} }
 
   /* ---------- hero ---------- */
-  .hero{padding:72px 0 56px; border-bottom:1px solid var(--line);}
+  .hero{padding:72px 0 56px; border-bottom:1px solid var(--line); position:relative; overflow:hidden;}
+  .hero-inner{position:relative; z-index:2;}
+  .load-in{opacity:0; transform:translateY(22px); animation:loadIn .8s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes loadIn{to{opacity:1; transform:translateY(0);}}
   .eyebrow{
     font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--calm);
     letter-spacing:.06em; margin-bottom:18px; display:flex; align-items:center; gap:8px;
@@ -66,18 +97,21 @@
   }
   .role{
     font-family:'IBM Plex Mono',monospace; color:var(--signal); font-size:16px; margin-bottom:22px;
+    min-height:1.4em; display:inline-block; border-right:2px solid var(--signal);
   }
+  .role.done{border-right-color:transparent;}
+  @media (min-width:760px){ .role{white-space:nowrap;} }
   .hero p.lede{color:var(--text-dim); max-width:600px; font-size:16px;}
   .hero-meta{display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:28px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--text-mute);}
   .hero-meta span{display:flex; align-items:center; gap:6px;}
   .hero-cta{display:flex; gap:12px; margin-top:32px; flex-wrap:wrap;}
   .btn{
     font-family:'IBM Plex Mono',monospace; font-size:13px; padding:11px 18px; border-radius:3px;
-    border:1px solid var(--line); transition:all .2s;
+    border:1px solid var(--line); transition:all .2s; position:relative;
   }
   .btn-solid{background:var(--calm); color:#0e1116; border-color:var(--calm); font-weight:600;}
-  .btn-solid:hover{background:#66ddd0;}
-  .btn-ghost:hover{border-color:var(--signal); color:var(--signal);}
+  .btn-solid:hover{background:#66ddd0; box-shadow:0 0 24px rgba(79,209,197,0.45); transform:translateY(-2px);}
+  .btn-ghost:hover{border-color:var(--signal); color:var(--signal); box-shadow:0 0 20px rgba(255,138,61,0.25); transform:translateY(-2px);}
 
   /* ---------- log ticker signature element ---------- */
   .log{
@@ -173,16 +207,47 @@
   .contact-item a:hover{color:var(--calm);}
   .foot-note{margin-top:40px; color:var(--text-mute); font-size:12px; font-family:'IBM Plex Mono',monospace;}
 
-  [data-reveal]{opacity:0; transform:translateY(16px); transition:opacity .6s ease, transform .6s ease;}
+  [data-reveal]{opacity:0; transform:translateY(24px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);}
   [data-reveal].in{opacity:1; transform:translateY(0);}
+
+  [data-reveal-item], .reveal-child{opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease;}
+  [data-reveal-item].in, .reveal-child.in{opacity:1; transform:translateY(0);}
+
+  .sec-label{position:relative;}
+  .sec-label .rule{
+    display:inline-block; height:1px; width:0; background:var(--line); margin-left:10px;
+    transition:width .8s ease .2s; vertical-align:middle;
+  }
+  [data-reveal].in .rule{width:60px;}
+
+  /* project card spotlight + tilt */
+  .proj{will-change:transform; position:relative; overflow:hidden;}
+  .proj::before{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(220px circle at var(--px,50%) var(--py,50%), rgba(79,209,197,0.13), transparent 65%);
+    opacity:0; transition:opacity .3s ease; pointer-events:none;
+  }
+  .proj:hover::before{opacity:1;}
+
+  /* stat counters */
+  .stat-row{display:flex; gap:40px; flex-wrap:wrap; margin:26px 0 6px;}
+  .stat{font-family:'IBM Plex Mono',monospace;}
+  .stat-num{font-size:34px; font-weight:700; color:var(--calm); line-height:1;}
+  .stat-label{font-size:11.5px; color:var(--text-mute); margin-top:6px; letter-spacing:.04em;}
+
+  /* magnetic wrapper */
+  .magnetic{display:inline-block; transition:transform .15s ease-out;}
 </style>
 </head>
 <body>
 
+<div id="scrollbar"></div>
+<div id="spotlight"></div>
+
 <header>
   <div class="container topbar">
     <div class="brand"><span class="dot"></span>karthikeyan<span style="color:var(--text-mute)">.sh</span></div>
-    <nav>
+    <nav id="navLinks">
       <a href="#about">about</a>
       <a href="#skills">skills</a>
       <a href="#experience">experience</a>
@@ -194,26 +259,29 @@
 </header>
 
 <section class="hero container" style="border-bottom:1px solid var(--line);">
-  <div class="eyebrow">whoami<span class="cursor"></span></div>
-  <h1>Karthikeyan S</h1>
-  <div class="role mono">Associate AI Engineer — Generative AI, LLM &amp; Agentic Workflows</div>
-  <p class="lede">I build systems where large language models make decisions — threat classifiers, multi-agent pipelines, retrieval-backed assistants — and then I spend just as much time making sure those decisions are testable, bounded, and explainable.</p>
+  <canvas id="particles"></canvas>
+  <div class="hero-inner">
+  <div class="eyebrow load-in" style="animation-delay:.05s">whoami<span class="cursor"></span></div>
+  <h1 class="load-in" style="animation-delay:.15s">Karthikeyan S</h1>
+  <div class="role mono load-in" id="roleText" style="animation-delay:.25s"></div>
+  <p class="lede load-in" style="animation-delay:.35s">I build systems where large language models make decisions — threat classifiers, multi-agent pipelines, retrieval-backed assistants — and then I spend just as much time making sure those decisions are testable, bounded, and explainable.</p>
 
-  <div class="hero-meta">
+  <div class="hero-meta load-in" style="animation-delay:.45s">
     <span>📍 Chennai, Tamil Nadu, India</span>
     <span>✉ karthikeyan123401@gmail.com</span>
     <span>☎ +91 63808 37262</span>
   </div>
 
-  <div class="hero-cta">
-    <a class="btn btn-solid" href="mailto:karthikeyan123401@gmail.com">Email me</a>
-    <a class="btn btn-ghost" href="https://github.com/skarthi369" target="_blank">GitHub ↗</a>
-    <a class="btn btn-ghost" href="https://linkedin.com/in/karthikeyan-s" target="_blank">LinkedIn ↗</a>
+  <div class="hero-cta load-in" style="animation-delay:.55s">
+    <span class="magnetic"><a class="btn btn-solid" href="mailto:karthikeyan123401@gmail.com">Email me</a></span>
+    <span class="magnetic"><a class="btn btn-ghost" href="https://github.com/skarthi369" target="_blank">GitHub ↗</a></span>
+    <span class="magnetic"><a class="btn btn-ghost" href="https://linkedin.com/in/karthikeyan-s" target="_blank">LinkedIn ↗</a></span>
   </div>
 
-  <div class="log" aria-hidden="true">
+  <div class="log load-in" style="animation-delay:.65s" aria-hidden="true">
     <div class="log-head"><div class="dots"><span></span><span></span><span></span></div>&nbsp;agent.log</div>
     <div class="log-body" id="logBody"></div>
+  </div>
   </div>
 </section>
 
@@ -221,7 +289,7 @@
   <div class="sec-label">cat about.md</div>
   <h2>About</h2>
   <div class="about-grid">
-    <p>B.Tech graduate in Artificial Intelligence &amp; Data Science, currently a Generative AI Research Intern at CDAC 1 + year experinces , where I work on autonomous cybersecurity agents — systems that have to make real classification calls on live traffic, not just demo well.</p>
+    <p>B.Tech graduate in Artificial Intelligence &amp; Data Science, currently a Generative AI Research Engineer at CDAC, where I work on autonomous cybersecurity agents — systems that have to make real classification calls on live traffic, not just demo well.</p>
     <p>Most of my work sits at the intersection of two things people usually treat separately: getting an LLM to reason well, and making sure that reasoning is verifiable. RAG pipelines, embedding-based retrieval, fine-tuning, and prompt design on one side; testing, documentation, and constraint-setting on the other.</p>
     <p>Published at ICACT 2026, took part in 10+ hackathons and won three, and I'm available to join immediately.</p>
   </div>
@@ -398,6 +466,12 @@
 <section id="achievements" class="container" data-reveal>
   <div class="sec-label">git log --grep=hackathon</div>
   <h2>Achievements &amp; Hackathons</h2>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-num" data-count="10" data-suffix="+">0</div><div class="stat-label">HACKATHONS ENTERED</div></div>
+    <div class="stat"><div class="stat-num" data-count="3">0</div><div class="stat-label">HACKATHONS WON</div></div>
+    <div class="stat"><div class="stat-num" data-count="6">0</div><div class="stat-label">SHIPPED PROJECTS</div></div>
+    <div class="stat"><div class="stat-num" data-count="1" data-suffix="+">0</div><div class="stat-label">YEARS IN GENAI R&amp;D</div></div>
+  </div>
   <p class="ach-summary">Participated in <b>10+ hackathons</b> across Generative AI, Enterprise AI, and applied ML tracks — <b>3 wins</b>.</p>
   <ul class="ach-list">
     <li><span class="trophy">WIN</span> Hexaware 36-Hour National Hackathon — Enterprise AI Track</li>
@@ -420,6 +494,92 @@
 </footer>
 
 <script>
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- scroll progress bar ---------- */
+  const scrollbar = document.getElementById('scrollbar');
+  function updateScrollbar(){
+    const h = document.documentElement;
+    const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    scrollbar.style.width = pct + '%';
+  }
+  document.addEventListener('scroll', updateScrollbar, {passive:true});
+  updateScrollbar();
+
+  /* ---------- cursor spotlight ---------- */
+  const spotlight = document.getElementById('spotlight');
+  window.addEventListener('mousemove', (e)=>{
+    spotlight.style.setProperty('--mx', e.clientX + 'px');
+    spotlight.style.setProperty('--my', e.clientY + 'px');
+  });
+
+  /* ---------- hero particles ---------- */
+  (function particles(){
+    const canvas = document.getElementById('particles');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let w,h,dots=[];
+    function resize(){
+      w = canvas.width = canvas.offsetWidth;
+      h = canvas.height = canvas.offsetHeight;
+    }
+    function init(){
+      resize();
+      const count = Math.min(46, Math.floor(w/28));
+      dots = Array.from({length:count}, ()=>({
+        x:Math.random()*w, y:Math.random()*h,
+        vx:(Math.random()-0.5)*0.25, vy:(Math.random()-0.5)*0.25,
+        r:Math.random()*1.4+0.6
+      }));
+    }
+    function tick(){
+      ctx.clearRect(0,0,w,h);
+      dots.forEach(d=>{
+        d.x+=d.vx; d.y+=d.vy;
+        if(d.x<0||d.x>w) d.vx*=-1;
+        if(d.y<0||d.y>h) d.vy*=-1;
+        ctx.beginPath();
+        ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+        ctx.fillStyle='rgba(79,209,197,0.35)';
+        ctx.fill();
+      });
+      for(let i=0;i<dots.length;i++){
+        for(let j=i+1;j<dots.length;j++){
+          const dx=dots[i].x-dots[j].x, dy=dots[i].y-dots[j].y;
+          const dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<110){
+            ctx.beginPath();
+            ctx.moveTo(dots[i].x,dots[i].y);
+            ctx.lineTo(dots[j].x,dots[j].y);
+            ctx.strokeStyle=`rgba(79,209,197,${0.12*(1-dist/110)})`;
+            ctx.lineWidth=1;
+            ctx.stroke();
+          }
+        }
+      }
+      if(!reduceMotion) requestAnimationFrame(tick);
+    }
+    window.addEventListener('resize', init);
+    init();
+    if(!reduceMotion) requestAnimationFrame(tick); else tick();
+  })();
+
+  /* ---------- typing effect for role text ---------- */
+  (function typeRole(){
+    const el = document.getElementById('roleText');
+    const full = "Associate AI Engineer — Generative AI, LLM & Agentic Workflows";
+    if(reduceMotion){ el.textContent = full; el.classList.add('done'); return; }
+    let i = 0;
+    function step(){
+      el.textContent = full.slice(0,i);
+      i++;
+      if(i<=full.length){ setTimeout(step, 22); }
+      else{ el.classList.add('done'); }
+    }
+    setTimeout(step, 900);
+  })();
+
+  /* ---------- agent.log ticker ---------- */
   const lines = [
     ["INFO","agent.init()","AI firewall online — LLM classifier attached"],
     ["OK","retrieval.hybrid()","dense + keyword search merged, 12ms"],
@@ -429,26 +589,103 @@
     ["INFO","rag.index()","vector store synced, 4 sources"],
     ["OK","deploy.docker()","container healthy, 0 restarts"]
   ];
-  const body = document.getElementById('logBody');
-  let i = 0;
+  const logBodyEl = document.getElementById('logBody');
+  let li = 0;
   function pushLine(){
-    const [lvl,fn,msg] = lines[i % lines.length];
+    const [lvl,fn,msg] = lines[li % lines.length];
     const cls = lvl === 'WARN' ? 'warn' : (lvl==='OK' ? 'ok' : '');
     const div = document.createElement('div');
     div.className = 'log-line';
     div.innerHTML = `<span class="tag">[${lvl}]</span> <span class="${cls}">${fn}</span> — ${msg}`;
-    body.appendChild(div);
-    if(body.children.length > 6){ body.removeChild(body.firstChild); }
-    body.scrollTop = body.scrollHeight;
-    i++;
+    logBodyEl.appendChild(div);
+    if(logBodyEl.children.length > 6){ logBodyEl.removeChild(logBodyEl.firstChild); }
+    logBodyEl.scrollTop = logBodyEl.scrollHeight;
+    li++;
   }
   pushLine();
   setInterval(pushLine, 1700);
 
+  /* ---------- section rule underline ---------- */
+  document.querySelectorAll('.sec-label').forEach(el=>{
+    const rule = document.createElement('span');
+    rule.className = 'rule';
+    el.appendChild(rule);
+  });
+
+  /* ---------- staggered reveal (sections + inner items) ---------- */
+  const itemSelectors = '.job, .proj, .tag, .cert-list li, .ach-list li, .skill-block, .stat, .contact-item, .pub';
+  document.querySelectorAll('[data-reveal]').forEach(section=>{
+    section.querySelectorAll(itemSelectors).forEach((el,idx)=>{
+      el.classList.add('reveal-child');
+      el.style.transitionDelay = Math.min(idx*55, 500) + 'ms';
+    });
+  });
+
   const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); } });
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        e.target.querySelectorAll('.reveal-child').forEach(el=>el.classList.add('in'));
+        if(e.target.id === 'achievements'){ animateCounters(); }
+        io.unobserve(e.target);
+      }
+    });
   }, {threshold:0.12});
   document.querySelectorAll('[data-reveal]').forEach(el=>io.observe(el));
+
+  /* ---------- animated counters ---------- */
+  let countersRun = false;
+  function animateCounters(){
+    if(countersRun) return;
+    countersRun = true;
+    document.querySelectorAll('.stat-num').forEach(el=>{
+      const target = parseInt(el.dataset.count,10);
+      const suffix = el.dataset.suffix || '';
+      const dur = 1100;
+      const start = performance.now();
+      function frame(now){
+        const p = Math.min((now-start)/dur, 1);
+        const eased = 1 - Math.pow(1-p, 3);
+        el.textContent = Math.round(eased*target) + suffix;
+        if(p<1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  /* ---------- magnetic buttons ---------- */
+  document.querySelectorAll('.magnetic').forEach(wrap=>{
+    const btn = wrap.querySelector('.btn');
+    wrap.addEventListener('mousemove', (e)=>{
+      const r = wrap.getBoundingClientRect();
+      const x = e.clientX - r.left - r.width/2;
+      const y = e.clientY - r.top - r.height/2;
+      btn.style.transform = `translate(${x*0.18}px, ${y*0.35}px)`;
+    });
+    wrap.addEventListener('mouseleave', ()=>{ btn.style.transform = 'translate(0,0)'; });
+  });
+
+  /* ---------- project card spotlight tracking ---------- */
+  document.querySelectorAll('.proj').forEach(card=>{
+    card.addEventListener('mousemove', (e)=>{
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--px', (e.clientX-r.left)+'px');
+      card.style.setProperty('--py', (e.clientY-r.top)+'px');
+    });
+  });
+
+  /* ---------- scrollspy nav ---------- */
+  const navLinks = document.querySelectorAll('#navLinks a');
+  const sections = [...navLinks].map(a=>document.querySelector(a.getAttribute('href')));
+  function scrollspy(){
+    let current = sections[0];
+    sections.forEach(s=>{ if(s && window.scrollY >= s.offsetTop - 140){ current = s; } });
+    navLinks.forEach(a=>{
+      a.classList.toggle('active', a.getAttribute('href') === '#'+current.id);
+    });
+  }
+  document.addEventListener('scroll', scrollspy, {passive:true});
+  scrollspy();
 </script>
 
 </body>
